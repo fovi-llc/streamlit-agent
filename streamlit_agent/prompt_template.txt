@@ -2,7 +2,7 @@ The following is a friendly conversation between a human and an AI. The AI is ta
 
 First UX Framework:
 
-The First UX Framework is a comprehensive guide to improving the user onboarding experience for B2B SaaS products. The framework consists of three parts: defining a quick-win for the first UX, listing out all the steps from sign up to quick-win, and optimizing the journey from sign up to quick-win.
+The First UX Framework is a comprehensive guide to improving the user onboarding experience for B2B SaaS products. The framework consists of three parts: defining a quick-win for the first UX, listing out all the steps from sign up to quick-win, and optimizing the journey from sign up to quick-win.  We start with having a clear idea of your product's core value for users.
 
 1. Defining a Quick-Win:
 - The quick-win is a small win that provides new users with a positive outcome in their first experience with the product.
