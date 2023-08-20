@@ -1,45 +1,62 @@
+import os
 from langchain.chains import LLMChain
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.prompts import PromptTemplate
+import openai
+from pathlib import Path
 import streamlit as st
 
-st.set_page_config(page_title="StreamlitChatMessageHistory", page_icon="📖")
-st.title("📖 StreamlitChatMessageHistory")
+PROMPT_TEMPLATE_PATH = (Path(__file__).parent / "prompt_template.txt").absolute()
+
+st.set_page_config(page_title="Ildebot", page_icon="📖")
+st.title("📖 Ildebot")
 
 """
-A basic example of using StreamlitChatMessageHistory to help LLMChain remember messages in a conversation.
-The messages are stored in Session State across re-runs automatically. You can view the contents of Session State
-in the expander below. View the
-[source code for this app](https://github.com/langchain-ai/streamlit-agent/blob/main/streamlit_agent/basic_memory.py).
+Ildebot is a Proof of Concept for a Virtual Intelligence chat agent that guides you in applying SaaSGrowers.com's First UX Framework.
+View the [blog post about the First UX Framework](https://saasgrowers.com/blog/the-ultimate-user-onboarding-guide-for-b2b-saas-products/).
 """
-
-# Set up memory
-msgs = StreamlitChatMessageHistory(key="langchain_messages")
-memory = ConversationBufferMemory(chat_memory=msgs)
-if len(msgs.messages) == 0:
-    msgs.add_ai_message("How can I help you?")
-
-view_messages = st.expander("View the message contents in session state")
 
 # Get an OpenAI API Key before continuing
 if "openai_api_key" in st.secrets:
     openai_api_key = st.secrets.openai_api_key
+elif os.environ.get("OPENAI_API_KEY"):
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
 else:
     openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 if not openai_api_key:
     st.info("Enter an OpenAI API Key to continue")
     st.stop()
 
-# Set up the LLMChain, passing in memory
-template = """You are an AI chatbot having a conversation with a human.
+@st.cache_data(ttl=60 * 60 * 6)
+def get_model_names(openai_api_key):
+    print("Fetching model names from OpenAI API")
+    models = openai.Model.list(openai_api_key=openai_api_key)
+    print(f"Fetched {len(models)} models from OpenAI API")
+    return [model["id"] for model in models["data"] if model["id"].startswith("gpt")]
 
-{history}
-Human: {human_input}
-AI: """
-prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
-llm_chain = LLMChain(llm=OpenAI(openai_api_key=openai_api_key), prompt=prompt, memory=memory)
+@st.cache_data
+def get_prompt_template():
+    print("Fetching prompt template from file")
+    return PROMPT_TEMPLATE_PATH.read_text()
+
+# Choose a model
+with st.sidebar:
+    model_name = st.selectbox("Choose the OpenAI chat model to use", get_model_names(openai_api_key))
+
+# Set up memory
+msgs = StreamlitChatMessageHistory(key="langchain_messages")
+memory = ConversationBufferMemory(chat_memory=msgs)
+if len(msgs.messages) == 0:
+    # msgs.add_ai_message("How can I help you?")
+    msgs.add_ai_message("Hello.  Would you like to explore how to apply First UX Platform to your B2B SaaS?")
+
+view_messages = st.expander("View the message contents in session state")
+
+# Set up the LLMChain, passing in memory
+prompt = PromptTemplate(input_variables=["history", "human_input"], template=get_prompt_template())
+llm_chain = LLMChain(llm=ChatOpenAI(openai_api_key=openai_api_key, model_name=model_name), prompt=prompt, memory=memory)
 
 # Render current messages from StreamlitChatMessageHistory
 for msg in msgs.messages:
@@ -52,15 +69,16 @@ if prompt := st.chat_input():
     response = llm_chain.run(prompt)
     st.chat_message("ai").write(response)
 
-# Draw the messages at the end, so newly generated ones show up immediately
-with view_messages:
-    """
-    Memory initialized with:
-    ```python
-    msgs = StreamlitChatMessageHistory(key="langchain_messages")
-    memory = ConversationBufferMemory(chat_memory=msgs)
-    ```
+# From intro above 'You can view the contents of Session State in the expander below.'
+# # Draw the messages at the end, so newly generated ones show up immediately
+# with view_messages:
+#     """
+#     Memory initialized with:
+#     ```python
+#     msgs = StreamlitChatMessageHistory(key="langchain_messages")
+#     memory = ConversationBufferMemory(chat_memory=msgs)
+#     ```
 
-    Contents of `st.session_state.langchain_messages`:
-    """
-    view_messages.json(st.session_state.langchain_messages)
+#     Contents of `st.session_state.langchain_messages`:
+#     """
+#     view_messages.json(st.session_state.langchain_messages)

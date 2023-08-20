@@ -44,17 +44,26 @@ This project includes `Dockerfile` to run the app in Docker container. In order 
 
 To generate Image with `DOCKER_BUILDKIT`, follow below command
 
-```DOCKER_BUILDKIT=1 docker build --target=runtime . -t langchain-streamlit-agent:latest```
+```DOCKER_BUILDKIT=1 docker build --target=runtime . -t fovi-streamlit-agent:latest```
 
 1. Run the docker container directly
 
-``docker run -d --name langchain-streamlit-agent -p 8051:8051 langchain-streamlit-agent:latest ``
+``docker run -d --name fovi-streamlit-agent -p 8080:8080 --env OPENAI_API_KEY="$OPENAI_API_KEY" fovi-streamlit-agent:latest ``
 
 2. Run the docker container using docker-compose (Recommended)
 
 Edit the Command in `docker-compose` with target streamlit app
 
 ``docker-compose up``
+
+## Cloud Run
+
+```
+docker buildx build -t gptlab-streamlit .
+docker run -p 8080:8080 --env OPENAI_API_KEY="$OPENAI_API_KEY"
+```
+
+```gcloud builds submit --tag gcr.io/fovi-site/fovi-streamlit-agent```
 
 ## Contributing
 
